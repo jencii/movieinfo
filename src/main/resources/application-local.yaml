@@ -1,0 +1,5 @@
+movieapi:
+  omdb:
+    api-key: bb9c333f
+  tmdb:
+    api-key: 79a2c4595b2ee9ce361276ef85990e7d
