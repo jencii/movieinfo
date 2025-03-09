@@ -19,6 +19,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OmdbApiClient implements MovieApiClient {
 
+    private static final String API_KEY_PARAM = "apikey";
+    private static final String T_PARAM = "t";
+    private static final String S_PARAM = "s";
+    private static final String MOVIE_TYPE = "movie";
+
     private final WebClient webClient;
     private final OmdbApiConfig apiConfig;
 
@@ -37,8 +42,8 @@ public class OmdbApiClient implements MovieApiClient {
 
     private List<SearchResponse.MovieInfo> searchMovies(String searchString) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiConfig.getUrl())
-                .queryParam("s", searchString)
-                .queryParam("apikey", apiConfig.getApiKey());
+                .queryParam(S_PARAM, searchString)
+                .queryParam(API_KEY_PARAM, apiConfig.getApiKey());
 
         return webClient.get()
                 .uri(builder.toUriString())
@@ -60,7 +65,7 @@ public class OmdbApiClient implements MovieApiClient {
     private List<SearchResponse.MovieInfo> collectResponse(SearchResponse response) {
         return response != null && response.getSearch() != null
                 ? response.getSearch().stream()
-                .filter(movieInfo -> "movie".equalsIgnoreCase(movieInfo.getType()))
+                .filter(movieInfo -> MOVIE_TYPE.equalsIgnoreCase(movieInfo.getType()))
                 .collect(Collectors.toList())
                 : Collections.emptyList();
     }
@@ -68,8 +73,8 @@ public class OmdbApiClient implements MovieApiClient {
     // Get detail of a movie http://www.omdbapi.com/?t={Specific title of movie}&apikey=<<api key>>
     public Optional<DetailsResponse> getMovieDetailsByTitle(String movieTitle) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiConfig.getUrl())
-                .queryParam("t", movieTitle)
-                .queryParam("apikey", apiConfig.getApiKey());
+                .queryParam(T_PARAM, movieTitle)
+                .queryParam(API_KEY_PARAM, apiConfig.getApiKey());
 
         String uri = builder.toUriString();
 
