@@ -7,6 +7,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class SearchEventHandler {
@@ -18,6 +20,8 @@ public class SearchEventHandler {
     public void onSearchEvent(SearchEvent event) {
         SearchPhrase searchPhrase = new SearchPhrase();
         searchPhrase.setSearchString(event.getSearchString());
+        searchPhrase.setApiName(event.getApiName());
+        searchPhrase.setCreatedOn(LocalDateTime.now());
         searchPhraseRepository.save(searchPhrase); // counter?
     }
 }

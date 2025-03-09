@@ -8,10 +8,12 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class SearchEvent extends ApplicationEvent {
 
-    private String searchString;
+    private final String searchString;
+    private final String apiName;
 
-    public SearchEvent(Object source, String searchString) {
+    public SearchEvent(Object source, String searchString, String apiName) {
         super(source);
         this.searchString = searchString;
+        this.apiName = apiName;
     }
 }

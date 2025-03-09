@@ -1,3 +1,7 @@
-GET http://localhost:8080/movies/alien
+### TMDB
+GET http://localhost:8080/movies/alien?api=tmdb
+
+### OMDB
+GET http://localhost:8080/movies/alien?api=omdb
 
 

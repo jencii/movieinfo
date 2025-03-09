@@ -8,5 +8,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "movieapi.tmdb")
 @Data
 public class TmdbApiConfig {
+    private String url;
     private String apiKey;
 }

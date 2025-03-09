@@ -99,7 +99,9 @@ docker run --name movieinfo-redis -p 6379:6379 -d redis:latest
 
 ## Tesztek
 
-A projekt integrációs teszteket tartalmaz, amelyek WireMock segítségével szimulálják a külső API-kat. A tesztek futtatásához használja a következő Maven parancsot: `mvn test -Dspring.profiles.active=test`
+```bash
+mvn test -Dspring.profiles.active=test`
+```
 
 ## Függőségek
 
@@ -108,5 +110,3 @@ A projekt integrációs teszteket tartalmaz, amelyek WireMock segítségével sz
 * Spring Data Redis
 * Spring Data JPA
 * MySQL Connector/J
-* WireMock
-* SpringDoc OpenAPI

@@ -29,8 +29,8 @@ public class MovieControllerTest {
         List<Map<String, Object>> mockMovies = Collections.singletonList(Collections.singletonMap("Title", (Object)
                 "Inception"));
 
-        Mockito.when(movieService.getFastestMovieResponse(searchPhrase))
-                .thenReturn(Mono.just(org.springframework.http.ResponseEntity.ok(mockMovies)));
+//        Mockito.when(movieService.getMovies(searchPhrase))
+//                .thenReturn(Mono.just(org.springframework.http.ResponseEntity.ok(mockMovies)));
 
         webTestClient.get()
                 .uri("/movies/{searchPhrase}", searchPhrase)

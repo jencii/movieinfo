@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 public class SearchPhrase {
@@ -13,4 +15,6 @@ public class SearchPhrase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String searchString;
+    private String apiName;
+    private LocalDateTime createdOn;
 }

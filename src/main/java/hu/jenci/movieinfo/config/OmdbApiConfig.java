@@ -8,5 +8,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "movieapi.omdb")
 @Data
 public class OmdbApiConfig {
+    private String url;
     private String apiKey;
 }

@@ -1,4 +1,4 @@
-package hu.jenci.movieinfo;
+package hu.jenci.movieinfo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
