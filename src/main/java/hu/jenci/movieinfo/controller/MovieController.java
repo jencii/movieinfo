@@ -31,23 +31,25 @@ public class MovieController {
                     responseCode = "200",
                     description = "Successful search",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation
-                            = List.class))),
+                            = MovieResponse.class))),
             @ApiResponse(
                     responseCode = "500",
                     description = "Error",
                     content = @Content)
     })
     @GetMapping("/{searchString}")
-    public ResponseEntity<List<MovieDetail>> getMovie(
+    public ResponseEntity<MovieResponse> getMovie(
             @PathVariable String searchString,
             @RequestParam(value = "api", required = false) String apiName) {
         if (apiName == null) {
             apiName = "omdb";
         }
         var movies = movieService.getMovies(searchString, apiName);
+
         if (movies.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(movies);
+
+        return ResponseEntity.ok(new MovieResponse(movies));
     }
 }
