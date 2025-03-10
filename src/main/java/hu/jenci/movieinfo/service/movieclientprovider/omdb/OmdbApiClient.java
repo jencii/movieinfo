@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,13 +36,14 @@ public class OmdbApiClient implements MovieApiClient {
 
     @Override
     public List<MovieDetail> fetchMovieData(String movieTitle) {
-        List<SearchResponse.MovieInfo> movieInfos = searchMovies(movieTitle);
-        return movieInfos.stream()
-                .map(this::buildMovieDetail)
-                .toList();
+        return searchMovies(movieTitle)
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(this::buildMovieDetail)
+                .collectList()
+                .block();
     }
 
-    private List<SearchResponse.MovieInfo> searchMovies(String searchString) {
+    private Mono<List<SearchResponse.MovieInfo>> searchMovies(String searchString) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiConfig.getUrl())
                 .queryParam(S_PARAM, searchString)
                 .queryParam(API_KEY_PARAM, apiConfig.getApiKey());
@@ -50,16 +53,17 @@ public class OmdbApiClient implements MovieApiClient {
                 .retrieve()
                 .bodyToMono(SearchResponse.class)
                 .map(this::collectResponse)
-                .onErrorReturn(Collections.emptyList())
-                .block();
+                .onErrorReturn(Collections.emptyList());
     }
 
-    private MovieDetail buildMovieDetail(SearchResponse.MovieInfo omdbMovie) {
-        Optional<DetailsResponse> movieDetailsByTitle = getMovieDetailsByTitle(omdbMovie.getTitle());
-        String director = movieDetailsByTitle
-                .map(DetailsResponse::getDirector)
-                .orElse("");
-        return new MovieDetail(omdbMovie.getTitle(), omdbMovie.getYear(), director);
+    private Mono<MovieDetail> buildMovieDetail(SearchResponse.MovieInfo omdbMovie) {
+        return getMovieDetailsByTitle(omdbMovie.getTitle())
+                .map(movieDetailsByTitle -> {
+                    String director = movieDetailsByTitle
+                            .map(DetailsResponse::getDirector)
+                            .orElse("");
+                    return new MovieDetail(omdbMovie.getTitle(), omdbMovie.getYear(), director);
+                });
     }
 
     private List<SearchResponse.MovieInfo> collectResponse(SearchResponse response) {
@@ -71,7 +75,7 @@ public class OmdbApiClient implements MovieApiClient {
     }
 
     // Get detail of a movie http://www.omdbapi.com/?t={Specific title of movie}&apikey=<<api key>>
-    public Optional<DetailsResponse> getMovieDetailsByTitle(String movieTitle) {
+    public Mono<Optional<DetailsResponse>> getMovieDetailsByTitle(String movieTitle) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiConfig.getUrl())
                 .queryParam(T_PARAM, movieTitle)
                 .queryParam(API_KEY_PARAM, apiConfig.getApiKey());
@@ -83,8 +87,7 @@ public class OmdbApiClient implements MovieApiClient {
                 .retrieve()
                 .bodyToMono(DetailsResponse.class)
                 .map(Optional::ofNullable)
-                .onErrorReturn(Optional.empty())
-                .block();
+                .onErrorReturn(Optional.empty());
     }
 
 }

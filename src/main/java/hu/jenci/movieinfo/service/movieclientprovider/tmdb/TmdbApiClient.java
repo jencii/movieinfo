@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -37,13 +39,15 @@ public class TmdbApiClient implements MovieApiClient {
 
     @Override
     public List<MovieDetail> fetchMovieData(String movieTitle) {
-        SearchResponse searchResponse = searchMovies(movieTitle);
-        return searchResponse.getResults().stream()
-                .map(this::buildMovieDetail)
-                .toList();
+        return searchMovies(movieTitle)
+                .map(SearchResponse::getResults)
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(this::buildMovieDetail)
+                .collectList()
+                .block();
     }
 
-    private SearchResponse searchMovies(String movieTitle) {
+    private Mono<SearchResponse> searchMovies(String movieTitle) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiConfig.getUrl())
                 .pathSegment(SEARCH_PATH, MOVIE_PATH)
                 .queryParam(API_KEY_PARAM, apiConfig.getApiKey())
@@ -55,20 +59,21 @@ public class TmdbApiClient implements MovieApiClient {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
                 .bodyToMono(SearchResponse.class)
-                .onErrorReturn(new SearchResponse())
-                .block();
+                .onErrorReturn(new SearchResponse());
     }
 
-    private MovieDetail buildMovieDetail(SearchResponse.MovieResult movieResult) {
+    private Mono<MovieDetail> buildMovieDetail(SearchResponse.MovieResult movieResult) {
         String releaseDate = movieResult.getReleaseDate();
         String year = itStartWithYear(releaseDate) ? releaseDate.substring(0, 4) : YEAR_NA;
-        var credits = getMovieCredits(movieResult.getId());
-        String director = credits.getCrew().stream()
-                .filter(c -> DIRECTOR_JOB.equals(c.getJob()))
-                .map(CreditsResponse.Crew::getName)
-                .findFirst()
-                .orElse(YEAR_NA);
-        return new MovieDetail(movieResult.getTitle(), year, director);
+        return getMovieCredits(movieResult.getId())
+                .map(credits -> {
+                    String director = credits.getCrew().stream()
+                            .filter(c -> DIRECTOR_JOB.equals(c.getJob()))
+                            .map(CreditsResponse.Crew::getName)
+                            .findFirst()
+                            .orElse(YEAR_NA);
+                    return new MovieDetail(movieResult.getTitle(), year, director);
+                });
     }
 
     private boolean itStartWithYear(String releaseDate) {
@@ -89,7 +94,7 @@ public class TmdbApiClient implements MovieApiClient {
                 .block();
     }
 
-    public CreditsResponse getMovieCredits(int movieId) {
+    public Mono<CreditsResponse> getMovieCredits(int movieId) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiConfig.getUrl())
                 .pathSegment(MOVIE_PATH, String.valueOf(movieId), CREDITS_PATH)
                 .queryParam(API_KEY_PARAM, apiConfig.getApiKey());
@@ -99,7 +104,6 @@ public class TmdbApiClient implements MovieApiClient {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
                 .bodyToMono(CreditsResponse.class)
-                .onErrorReturn(new CreditsResponse())
-                .block();
+                .onErrorResume(e -> Mono.just(new CreditsResponse()));
     }
 }
